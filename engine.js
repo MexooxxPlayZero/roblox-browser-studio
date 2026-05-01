@@ -7,12 +7,12 @@
 
     var roStyle = document.createElement('style');
     roStyle.id = 'ro-core-style';
-    roStyle.textContent = ".ro-win{position:fixed!important;width:800px;height:550px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:50px;top:50px;box-shadow:0 20px 60px #000;overflow:hidden;pointer-events:auto!important}.ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333;user-select:none}.ro-body{flex:1;display:flex;background:#1b1b1f}.ro-close{margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px;font-weight:bold}.side-panel{width:260px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:12px;background:#1b1b1f}#canvas-container{flex:1;background:#0c0c0e;position:relative;cursor:grab}.ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:10px;border-radius:4px;outline:none;width:calc(100% - 22px)}.ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:10px;cursor:pointer!important;border-radius:4px;font-weight:bold;font-size:11px;width:100%;margin-top:5px}";
+    roStyle.textContent = ".ro-win{position:fixed!important;width:820px;height:550px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:50px;top:50px;box-shadow:0 20px 60px #000;overflow:hidden}.ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333}.ro-body{flex:1;display:flex;background:#1b1b1f;position:relative}.side-panel{width:260px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:12px;background:#1b1b1f;z-index:20}#canvas-container{flex:1;background:#000!important;position:relative;cursor:grab;z-index:10}.ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:10px;border-radius:4px;width:calc(100% - 22px)}.ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:10px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:11px;width:100%;margin-top:5px}.ro-close{margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px}";
     document.head.appendChild(roStyle);
 
     var roWin = document.createElement('div');
     roWin.className = 'ro-win';
-    roWin.innerHTML = '<div class="ro-bar"><span>Roblox Studio v0.4.6</span><button class="ro-close">X</button></div><div class="ro-body"><div class="side-panel"><label style="font-size:10px;color:#888">ENTER USER ID:</label><input type="text" id="u-in" class="ro-input" placeholder="e.g. 1"><button id="u-btn" class="ro-btn-blue">UPDATE FACE</button><hr style="border:0;border-top:1px solid #333;width:100%"><div style="font-size:10px;color:#555">OUTFITS</div><button class="ro-btn-blue" id="btn-red">RED SHIRT</button><button class="ro-btn-blue" id="btn-blue" style="background:#0055ff">BLUE SHIRT</button><button class="ro-btn-blue" id="btn-reset" style="background:#444">RESET ALL</button></div><div id="canvas-container"></div></div>';
+    roWin.innerHTML = '<div class="ro-bar"><span>Roblox Studio v0.4.7</span><button class="ro-close">X</button></div><div class="ro-body"><div class="side-panel"><label style="font-size:10px;color:#888">USER OR ID:</label><input type="text" id="u-in" class="ro-input" placeholder="Name or ID..."><button id="u-btn" class="ro-btn-blue">UPDATE PLAYER</button><hr style="border:0;border-top:1px solid #333;width:100%"><button class="ro-btn-blue" id="btn-red">RED SHIRT</button><button class="ro-btn-blue" id="btn-blue" style="background:#0055ff">BLUE SHIRT</button><button class="ro-btn-blue" id="btn-reset" style="background:#444">RESET ALL</button></div><div id="canvas-container"></div></div>';
     document.body.appendChild(roWin);
 
     var scene, cam, rend, char, head, torso;
@@ -42,8 +42,8 @@
       window.onmousemove = (e) => {
         if (drg) {
           char.rotation.y += (e.clientX - lx) * 0.01;
-          var nextX = char.rotation.x + (e.clientY - ly) * 0.01;
-          if (nextX > -0.5 && nextX < 0.5) char.rotation.x = nextX;
+          var nX = char.rotation.x + (e.clientY - ly) * 0.01;
+          if(nX > -0.6 && nX < 0.6) char.rotation.x = nX;
           lx = e.clientX; ly = e.clientY;
         }
       };
@@ -66,20 +66,30 @@
         head.material = new THREE.MeshLambertMaterial({color: 0xffcc00});
     };
 
-    document.getElementById('u-btn').onclick = () => {
-      var id = document.getElementById('u-in').value;
-      if(!id) return;
+    document.getElementById('u-btn').onclick = async () => {
+      var val = document.getElementById('u-in').value;
+      if(!val) return;
+      var targetId = val;
+      
+      // If it's a name, convert to ID first
+      if (isNaN(val)) {
+        try {
+          var r = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://users.roblox.com/v1/usernames/users'), {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({usernames: [val], excludeBannedUsers: true})
+          });
+          var d = await r.json();
+          if(d.data && d.data[0]) targetId = d.data[0].id;
+        } catch(e) { console.log("Name search failed"); }
+      }
+
       var texLoader = new THREE.TextureLoader();
       texLoader.setCrossOrigin('anonymous');
-      // New direct-access thumbnail URL
-      var thumbUrl = 'https://tr.rbxcdn.com/avatar-headshot?userId=' + id + '&width=150&height=150&format=png';
+      var thumbUrl = 'https://tr.rbxcdn.com/avatar-headshot?userId=' + targetId + '&width=150&height=150&format=png';
       
       texLoader.load(thumbUrl, (texture) => {
           head.material = new THREE.MeshLambertMaterial({map: texture});
-      }, undefined, () => {
-          head.material.color.setHex(0xff00ff); // Error Pink
-          console.log("Image blocked by CORS - this site is strict!");
-      });
+      }, undefined, () => { head.material.color.setHex(0xff00ff); });
     };
 
     var mv = false, mx, my;
