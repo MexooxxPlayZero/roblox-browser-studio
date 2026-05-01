@@ -7,35 +7,66 @@
 
     var roStyle = document.createElement('style');
     roStyle.id = 'ro-core-style';
-    roStyle.textContent = ".ro-win{position:fixed!important;width:820px;height:550px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:50px;top:50px;box-shadow:0 20px 60px #000;overflow:hidden}.ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333}.ro-body{flex:1;display:flex;background:#1b1b1f}#canvas-container{flex:1;background:#000!important;position:relative;cursor:grab;overflow:hidden}.side-panel{width:260px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:12px;background:#1b1b1f}.ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:10px;border-radius:4px;width:calc(100% - 22px)}.ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:10px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:11px;width:100%;margin-top:5px}.ro-close{margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px}";
+    roStyle.textContent = ".ro-win{position:fixed!important;width:850px;height:600px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:50px;top:50px;box-shadow:0 20px 60px #000;overflow:hidden}.ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333}.ro-body{flex:1;display:flex;background:#1b1b1f}#canvas-container{flex:1;background:#000!important;position:relative;cursor:grab;border-left:1px solid #333}.side-panel{width:280px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:10px;background:#1b1b1f;overflow-y:auto}.ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:8px;border-radius:4px;width:calc(100% - 20px);font-size:12px}.ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:10px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:11px;width:100%}.ro-close{margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px}label{font-size:10px;color:#888;margin-top:5px}";
     document.head.appendChild(roStyle);
 
     var roWin = document.createElement('div');
     roWin.className = 'ro-win';
-    roWin.innerHTML = '<div class="ro-bar"><span>Roblox Studio v0.5.1</span><button class="ro-close">X</button></div><div class="ro-body"><div class="side-panel"><label style="font-size:10px;color:#888">AVATAR SEARCH:</label><input type="text" id="u-in" class="ro-input" placeholder="Username or ID..."><button id="u-btn" class="ro-btn-blue">LOAD CHARACTER</button><hr style="border:0;border-top:1px solid #333;width:100%"><div style="font-size:10px;color:#555">TEST TEXTURES</div><button class="ro-btn-blue" id="btn-brick">BRICK SKIN</button><button class="ro-btn-blue" id="btn-reset" style="background:#444">RESET ALL</button></div><div id="canvas-container"></div></div>';
+    roWin.innerHTML = `
+      <div class="ro-bar"><span>Roblox Studio v0.5.5 [ADVANCED]</span><button class="ro-close">X</button></div>
+      <div class="ro-body">
+        <div class="side-panel">
+          <label>AVATAR LOADER</label>
+          <input type="text" id="u-in" class="ro-input" placeholder="Name or ID">
+          <button id="u-btn" class="ro-btn-blue">LOAD PLAYER</button>
+          <hr style="border:0;border-top:1px solid #333;margin:10px 0">
+          <label>GLOBAL COLOR</label>
+          <input type="color" id="color-main" style="width:100%;height:30px;border:none;background:none;cursor:pointer" value="#cccccc">
+          <hr style="border:0;border-top:1px solid #333;margin:10px 0">
+          <label>ADVANCED PART EDITOR</label>
+          <select id="part-select" class="ro-input">
+            <option value="head">Head</option>
+            <option value="torso">Torso</option>
+            <option value="larm">Left Arm</option>
+            <option value="rarm">Right Arm</option>
+            <option value="lleg">Left Leg</option>
+            <option value="rleg">Right Leg</option>
+          </select>
+          <button id="btn-part-color" class="ro-btn-blue">Apply Global to Part</button>
+          <input type="text" id="img-url" class="ro-input" placeholder="Custom Image URL...">
+          <button id="btn-apply-img" class="ro-btn-blue" style="background:#444">Apply Image to Part</button>
+          <button id="btn-reset" class="ro-btn-blue" style="background:#ff4b4b;margin-top:20px">RESET CHARACTER</button>
+        </div>
+        <div id="canvas-container"></div>
+      </div>`;
     document.body.appendChild(roWin);
 
-    var scene, cam, rend, char, head, torso;
+    var scene, cam, rend, char, parts = {};
     var init3D = () => {
       if (!window.THREE) return setTimeout(init3D, 100);
       var con = document.getElementById('canvas-container');
       scene = new THREE.Scene();
       cam = new THREE.PerspectiveCamera(45, con.clientWidth/con.clientHeight, 0.1, 1000);
       cam.position.set(0, 1, 12);
-      rend = new THREE.WebGLRenderer({antialias:true, alpha: false});
-      rend.setClearColor(0x000000, 1);
+      rend = new THREE.WebGLRenderer({antialias:true});
       rend.setSize(con.clientWidth, con.clientHeight);
+      rend.setClearColor(0x000000, 1);
       con.appendChild(rend.domElement);
       scene.add(new THREE.AmbientLight(0xffffff, 1.3));
       
       char = new THREE.Group();
-      var box = (w,h,d,x,y,c) => {
-        var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshLambertMaterial({color:c}));
+      var mk = (w,h,d,x,y) => {
+        var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshLambertMaterial({color:0xcccccc}));
         m.position.set(x,y,0); return m;
       };
-      head = box(1.2,1.2,1.2,0,1.8,0xffcc00);
-      torso = box(2,2,1,0,0,0xcccccc);
-      char.add(head, torso, box(1,2,1,-1.5,0,0xcccccc), box(1,2,1,1.5,0,0xcccccc), box(1,2,1,-0.5,-2.1,0xcccccc), box(1,2,1,0.5,-2.1,0xcccccc));
+      parts.head = mk(1.2,1.2,1.2,0,1.8); parts.head.material.color.setHex(0xffcc00);
+      parts.torso = mk(2,2,1,0,0);
+      parts.larm = mk(1,2,1,-1.5,0);
+      parts.rarm = mk(1,2,1,1.5,0);
+      parts.lleg = mk(1,2,1,-0.5,-2.1);
+      parts.rleg = mk(1,2,1,0.5,-2.1);
+      
+      Object.values(parts).forEach(p => char.add(p));
       scene.add(char);
 
       var drg = false, lx, ly;
@@ -44,7 +75,7 @@
         if (drg) {
           char.rotation.y += (e.clientX - lx) * 0.01;
           var nX = char.rotation.x + (e.clientY - ly) * 0.01;
-          if(nX > -0.6 && nX < 0.6) char.rotation.x = nX;
+          if(nX > -0.7 && nX < 0.7) char.rotation.x = nX;
           lx = e.clientX; ly = e.clientY;
         }
       };
@@ -60,7 +91,31 @@
       document.head.appendChild(s);
     } else { init3D(); }
 
-    // THE IMPROVED LOADER
+    // Color Logic
+    document.getElementById('color-main').oninput = (e) => {
+      var c = e.target.value;
+      Object.values(parts).forEach(p => p.material.color.set(c));
+    };
+
+    document.getElementById('btn-part-color').onclick = () => {
+      var p = document.getElementById('part-select').value;
+      var c = document.getElementById('color-main').value;
+      parts[p].material.color.set(c);
+      parts[p].material.map = null;
+      parts[p].material.needsUpdate = true;
+    };
+
+    document.getElementById('btn-apply-img').onclick = () => {
+      var p = document.getElementById('part-select').value;
+      var url = document.getElementById('img-url').value;
+      if(!url) return;
+      var tex = new THREE.TextureLoader();
+      tex.setCrossOrigin('anonymous');
+      tex.load(url, (t) => {
+        parts[p].material = new THREE.MeshLambertMaterial({map: t});
+      });
+    };
+
     document.getElementById('u-btn').onclick = async () => {
       var val = document.getElementById('u-in').value;
       if(!val) return;
@@ -73,32 +128,23 @@
           });
           var d = await r.json();
           if(d.data && d.data[0]) id = d.data[0].id;
-        } catch(e) { console.error("Name lookup failed"); }
+        } catch(e) {}
       }
-
-      var thumbUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://www.roblox.com/headshot-thumbnail/image?userId='+id+'&width=150&height=150&format=png');
-      
+      var tUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://www.roblox.com/headshot-thumbnail/image?userId='+id+'&width=150&height=150&format=png');
       try {
-        var imgRes = await fetch(thumbUrl);
-        var blob = await imgRes.blob();
-        var url = URL.createObjectURL(blob);
-        new THREE.TextureLoader().load(url, (t) => {
-          head.material = new THREE.MeshLambertMaterial({map: t});
+        var res = await fetch(tUrl);
+        var blob = await res.blob();
+        new THREE.TextureLoader().load(URL.createObjectURL(blob), (t) => {
+          parts.head.material = new THREE.MeshLambertMaterial({map: t});
         });
-      } catch(e) { 
-        head.material.color.setHex(0xff00ff); // Pink if failed
-      }
-    };
-
-    document.getElementById('btn-brick').onclick = () => {
-        new THREE.TextureLoader().load('https://threejs.org/examples/textures/brick_diffuse.jpg', (t) => {
-            torso.material = new THREE.MeshLambertMaterial({map: t});
-        });
+      } catch(e) { parts.head.material.color.setHex(0xff00ff); }
     };
 
     document.getElementById('btn-reset').onclick = () => {
-        torso.material = new THREE.MeshLambertMaterial({color: 0xcccccc});
-        head.material = new THREE.MeshLambertMaterial({color: 0xffcc00});
+      Object.values(parts).forEach(p => {
+          p.material = new THREE.MeshLambertMaterial({color: 0xcccccc});
+      });
+      parts.head.material.color.setHex(0xffcc00);
     };
 
     roWin.querySelector('.ro-close').onclick = () => { roWin.remove(); roStyle.remove(); window.__roStudioLoaded = false; };
