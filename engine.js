@@ -12,7 +12,7 @@
 
     var roWin = document.createElement('div');
     roWin.className = 'ro-win';
-    roWin.innerHTML = '<div class="ro-bar"><span>Roblox Studio v0.4.5</span><button class="ro-close">X</button></div><div class="ro-body"><div class="side-panel"><input type="text" id="u-in" class="ro-input" placeholder="User ID..."><button id="u-btn" class="ro-btn-blue">LOAD ID</button><hr style="border:0;border-top:1px solid #333;width:100%"><button class="ro-btn-blue" id="btn-red">RED SHIRT</button><button class="ro-btn-blue" id="btn-blue" style="background:#0055ff">BLUE SHIRT</button></div><div id="canvas-container"></div></div>';
+    roWin.innerHTML = '<div class="ro-bar"><span>Roblox Studio v0.4.6</span><button class="ro-close">X</button></div><div class="ro-body"><div class="side-panel"><label style="font-size:10px;color:#888">ENTER USER ID:</label><input type="text" id="u-in" class="ro-input" placeholder="e.g. 1"><button id="u-btn" class="ro-btn-blue">UPDATE FACE</button><hr style="border:0;border-top:1px solid #333;width:100%"><div style="font-size:10px;color:#555">OUTFITS</div><button class="ro-btn-blue" id="btn-red">RED SHIRT</button><button class="ro-btn-blue" id="btn-blue" style="background:#0055ff">BLUE SHIRT</button><button class="ro-btn-blue" id="btn-reset" style="background:#444">RESET ALL</button></div><div id="canvas-container"></div></div>';
     document.body.appendChild(roWin);
 
     var scene, cam, rend, char, head, torso;
@@ -26,6 +26,7 @@
       rend.setSize(con.clientWidth, con.clientHeight);
       con.appendChild(rend.domElement);
       scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+      
       char = new THREE.Group();
       var box = (w,h,d,x,y,c) => {
         var m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshLambertMaterial({color:c}));
@@ -35,12 +36,14 @@
       torso = box(2,2,1,0,0,0xcccccc);
       char.add(head, torso, box(1,2,1,-1.5,0,0xcccccc), box(1,2,1,1.5,0,0xcccccc), box(1,2,1,-0.5,-2.1,0xcccccc), box(1,2,1,0.5,-2.1,0xcccccc));
       scene.add(char);
+
       var drg = false, lx, ly;
       con.onmousedown = (e) => { drg = true; lx = e.clientX; ly = e.clientY; };
       window.onmousemove = (e) => {
         if (drg) {
           char.rotation.y += (e.clientX - lx) * 0.01;
-          char.rotation.x += (e.clientY - ly) * 0.01;
+          var nextX = char.rotation.x + (e.clientY - ly) * 0.01;
+          if (nextX > -0.5 && nextX < 0.5) char.rotation.x = nextX;
           lx = e.clientX; ly = e.clientY;
         }
       };
@@ -58,13 +61,25 @@
 
     document.getElementById('btn-red').onclick = () => torso.material.color.setHex(0xff0000);
     document.getElementById('btn-blue').onclick = () => torso.material.color.setHex(0x0055ff);
+    document.getElementById('btn-reset').onclick = () => {
+        torso.material.color.setHex(0xcccccc);
+        head.material = new THREE.MeshLambertMaterial({color: 0xffcc00});
+    };
+
     document.getElementById('u-btn').onclick = () => {
       var id = document.getElementById('u-in').value;
       if(!id) return;
-      var tex = new THREE.TextureLoader();
-      tex.setCrossOrigin('anonymous');
-      var url = 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&url=' + encodeURIComponent('https://www.roblox.com/headshot-thumbnail/image?userId='+id+'&width=150&height=150&format=png');
-      head.material = new THREE.MeshLambertMaterial({map: tex.load(url)});
+      var texLoader = new THREE.TextureLoader();
+      texLoader.setCrossOrigin('anonymous');
+      // New direct-access thumbnail URL
+      var thumbUrl = 'https://tr.rbxcdn.com/avatar-headshot?userId=' + id + '&width=150&height=150&format=png';
+      
+      texLoader.load(thumbUrl, (texture) => {
+          head.material = new THREE.MeshLambertMaterial({map: texture});
+      }, undefined, () => {
+          head.material.color.setHex(0xff00ff); // Error Pink
+          console.log("Image blocked by CORS - this site is strict!");
+      });
     };
 
     var mv = false, mx, my;
@@ -72,7 +87,6 @@
     window.onmousemove = (e) => { if(mv) { roWin.style.left = (e.clientX - mx) + 'px'; roWin.style.top = (e.clientY - my) + 'px'; } };
     window.onmouseup = () => mv = false;
     roWin.querySelector('.ro-close').onclick = () => { roWin.remove(); roStyle.remove(); window.__roStudioLoaded = false; };
-    console.log("Studio v0.4.5 Loaded Successfully");
   };
   setup();
 }
