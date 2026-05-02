@@ -7,23 +7,21 @@
 
     var roStyle = document.createElement('style');
     roStyle.id = 'ro-core-style';
-    roStyle.textContent = ".ro-win{position:fixed!important;width:850px;height:600px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:50px;top:50px;box-shadow:0 20px 60px #000;overflow:hidden}.ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333}.ro-body{flex:1;display:flex;background:#1b1b1f}#canvas-container{flex:1;background:#000!important;position:relative;cursor:grab;border-left:1px solid #333}.side-panel{width:280px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:10px;background:#1b1b1f;overflow-y:auto}.ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:8px;border-radius:4px;width:calc(100% - 20px);font-size:12px}.ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:10px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:11px;width:100%}.ro-close{margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px}label{font-size:10px;color:#888;margin-top:5px}";
+    roStyle.textContent = ".ro-win{position:fixed!important;width:850px;height:600px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:50px;top:50px;box-shadow:0 20px 60px #000;overflow:hidden}.ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333}.ro-body{flex:1;display:flex;background:#1b1b1f}#canvas-container{flex:1;background:#000!important;position:relative;cursor:grab;border-left:1px solid #333}.side-panel{width:280px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:10px;background:#1b1b1f;overflow-y:auto}.ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:8px;border-radius:4px;width:calc(100% - 20px);font-size:12px}.ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:10px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:11px;width:100%}.ro-btn-green{background:#28a745;border:none;color:#fff;padding:10px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:11px;width:100%}.ro-close{margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px}label{font-size:10px;color:#888;margin-top:5px;text-transform:uppercase;letter-spacing:1px}";
     document.head.appendChild(roStyle);
 
     var roWin = document.createElement('div');
     roWin.className = 'ro-win';
     roWin.innerHTML = `
-      <div class="ro-bar"><span>Roblox Studio v0.5.5 [ADVANCED]</span><button class="ro-close">X</button></div>
+      <div class="ro-bar"><span>Roblox Studio v0.5.6 [PART COLOR FIX]</span><button class="ro-close">X</button></div>
       <div class="ro-body">
         <div class="side-panel">
-          <label>AVATAR LOADER</label>
-          <input type="text" id="u-in" class="ro-input" placeholder="Name or ID">
-          <button id="u-btn" class="ro-btn-blue">LOAD PLAYER</button>
+          <label>1. Global Paint (All Parts)</label>
+          <input type="color" id="color-global" style="width:100%;height:30px;cursor:pointer" value="#cccccc">
+          
           <hr style="border:0;border-top:1px solid #333;margin:10px 0">
-          <label>GLOBAL COLOR</label>
-          <input type="color" id="color-main" style="width:100%;height:30px;border:none;background:none;cursor:pointer" value="#cccccc">
-          <hr style="border:0;border-top:1px solid #333;margin:10px 0">
-          <label>ADVANCED PART EDITOR</label>
+          
+          <label>2. Targeted Part Editor</label>
           <select id="part-select" class="ro-input">
             <option value="head">Head</option>
             <option value="torso">Torso</option>
@@ -32,10 +30,23 @@
             <option value="lleg">Left Leg</option>
             <option value="rleg">Right Leg</option>
           </select>
-          <button id="btn-part-color" class="ro-btn-blue">Apply Global to Part</button>
-          <input type="text" id="img-url" class="ro-input" placeholder="Custom Image URL...">
-          <button id="btn-apply-img" class="ro-btn-blue" style="background:#444">Apply Image to Part</button>
-          <button id="btn-reset" class="ro-btn-blue" style="background:#ff4b4b;margin-top:20px">RESET CHARACTER</button>
+          
+          <div style="display:flex; gap:5px; align-items:center; margin-top:5px;">
+            <input type="color" id="color-part" style="flex:1; height:40px; cursor:pointer" value="#0084ff">
+            <button id="btn-apply-part" class="ro-btn-green" style="flex:2">PAINT SELECTED</button>
+          </div>
+
+          <hr style="border:0;border-top:1px solid #333;margin:10px 0">
+          
+          <label>3. Advanced Image</label>
+          <input type="text" id="img-url" class="ro-input" placeholder="Paste Image URL...">
+          <button id="btn-apply-img" class="ro-btn-blue" style="background:#444">Apply to Selected Part</button>
+          
+          <label style="margin-top:20px">User Loader</label>
+          <input type="text" id="u-in" class="ro-input" placeholder="Username/ID">
+          <button id="u-btn" class="ro-btn-blue">FETCH PLAYER</button>
+          
+          <button id="btn-reset" class="ro-btn-blue" style="background:#ff4b4b;margin-top:20px">FULL RESET</button>
         </div>
         <div id="canvas-container"></div>
       </div>`;
@@ -52,7 +63,7 @@
       rend.setSize(con.clientWidth, con.clientHeight);
       rend.setClearColor(0x000000, 1);
       con.appendChild(rend.domElement);
-      scene.add(new THREE.AmbientLight(0xffffff, 1.3));
+      scene.add(new THREE.AmbientLight(0xffffff, 1.4));
       
       char = new THREE.Group();
       var mk = (w,h,d,x,y) => {
@@ -91,59 +102,52 @@
       document.head.appendChild(s);
     } else { init3D(); }
 
-    // Color Logic
-    document.getElementById('color-main').oninput = (e) => {
-      var c = e.target.value;
-      Object.values(parts).forEach(p => p.material.color.set(c));
+    // 1. Global Color (Still exists, but you use it for the base)
+    document.getElementById('color-global').oninput = (e) => {
+      Object.values(parts).forEach(p => p.material.color.set(e.target.value));
     };
 
-    document.getElementById('btn-part-color').onclick = () => {
-      var p = document.getElementById('part-select').value;
-      var c = document.getElementById('color-main').value;
-      parts[p].material.color.set(c);
-      parts[p].material.map = null;
-      parts[p].material.needsUpdate = true;
+    // 2. TARGETED PART PAINTING (The fix!)
+    document.getElementById('btn-apply-part').onclick = () => {
+      var target = document.getElementById('part-select').value;
+      var color = document.getElementById('color-part').value;
+      // We create a unique material so it doesn't share with others
+      parts[target].material = new THREE.MeshLambertMaterial({color: color});
     };
 
+    // 3. Image Logic
     document.getElementById('btn-apply-img').onclick = () => {
       var p = document.getElementById('part-select').value;
       var url = document.getElementById('img-url').value;
       if(!url) return;
-      var tex = new THREE.TextureLoader();
-      tex.setCrossOrigin('anonymous');
-      tex.load(url, (t) => {
+      new THREE.TextureLoader().load(url, (t) => {
         parts[p].material = new THREE.MeshLambertMaterial({map: t});
       });
     };
 
+    // Player Loader
     document.getElementById('u-btn').onclick = async () => {
       var val = document.getElementById('u-in').value;
       if(!val) return;
       var id = val;
       if (isNaN(val)) {
-        try {
-          var r = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://users.roblox.com/v1/usernames/users'), {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({usernames: [val], excludeBannedUsers: true})
-          });
-          var d = await r.json();
-          if(d.data && d.data[0]) id = d.data[0].id;
-        } catch(e) {}
+        var r = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://users.roblox.com/v1/usernames/users'), {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({usernames: [val], excludeBannedUsers: true})
+        });
+        var d = await r.json();
+        if(d.data && d.data[0]) id = d.data[0].id;
       }
       var tUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://www.roblox.com/headshot-thumbnail/image?userId='+id+'&width=150&height=150&format=png');
-      try {
-        var res = await fetch(tUrl);
-        var blob = await res.blob();
-        new THREE.TextureLoader().load(URL.createObjectURL(blob), (t) => {
-          parts.head.material = new THREE.MeshLambertMaterial({map: t});
-        });
-      } catch(e) { parts.head.material.color.setHex(0xff00ff); }
+      var res = await fetch(tUrl);
+      var b = await res.blob();
+      new THREE.TextureLoader().load(URL.createObjectURL(b), (t) => {
+        parts.head.material = new THREE.MeshLambertMaterial({map: t});
+      });
     };
 
     document.getElementById('btn-reset').onclick = () => {
-      Object.values(parts).forEach(p => {
-          p.material = new THREE.MeshLambertMaterial({color: 0xcccccc});
-      });
+      Object.values(parts).forEach(p => p.material = new THREE.MeshLambertMaterial({color: 0xcccccc}));
       parts.head.material.color.setHex(0xffcc00);
     };
 
