@@ -8,66 +8,58 @@
     var roStyle = document.createElement('style');
     roStyle.id = 'ro-core-style';
     roStyle.textContent = `
-      .ro-win{position:fixed!important;width:1050px;height:750px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:20px;top:20px;box-shadow:0 20px 60px #000;overflow:hidden}
+      .ro-win{position:fixed!important;width:1050px;height:750px;background:#1b1b1f!important;color:#fff!important;font-family:sans-serif;border-radius:8px;z-index:2147483647!important;display:flex;flex-direction:column;border:1px solid #444;left:20px;top:20px;box-shadow:0 20px 60px #000;overflow:hidden;transition:all 0.3s ease}
+      .ro-win.minimized{height:38px!important;width:300px!important}
       .ro-bar{height:38px;background:#222;display:flex;align-items:center;padding:0 12px;cursor:move;border-bottom:1px solid #333}
-      .ro-tabs{display:flex;background:#25252b;padding:0 5px;border-bottom:1px solid #333}
-      .ro-tab{padding:12px 18px;font-size:12px;cursor:pointer;color:#888;transition:0.2s}
-      .ro-tab.active{color:#fff;border-bottom:2px solid #0084ff;background:rgba(255,255,255,0.05)}
-      .ro-body{flex:1;display:flex;background:#1b1b1f}
-      #canvas-container{flex:1;background:#000;position:relative}
-      .side-panel{width:300px;padding:20px;border-right:1px solid #333;display:flex;flex-direction:column;gap:15px;background:#1b1b1f;overflow-y:auto}
-      .ro-input{background:#2a2a30;border:1px solid #444;color:#fff;padding:10px;border-radius:4px;width:calc(100% - 22px)}
-      .ro-btn-blue{background:#0084ff;border:none;color:#fff;padding:12px;cursor:pointer;border-radius:4px;font-weight:bold}
-      .ro-btn-play{background:#28a745;border:none;color:#fff;padding:15px;cursor:pointer;border-radius:4px;font-weight:bold;font-size:16px}
-      #esc-menu{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(5px)}
-      .esc-box{width:350px;background:#25252b;padding:25px;border-radius:10px;border:1px solid #444;display:flex;flex-direction:column;gap:12px}
-      #lock-ui{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;border:2px solid white;border-radius:50%;display:none;pointer-events:none;z-index:10}
-      .hidden{display:none!important}
+      .bar-btns{margin-left:auto;display:flex;gap:6px}
+      .bar-btn{background:#333;border:none;color:#fff;cursor:pointer;padding:2px 8px;border-radius:4px;font-size:14px;line-height:1}
+      .bar-btn:hover{background:#444}
+      .ro-body{flex:1;display:flex;background:#1b1b1f;position:relative}
+      #canvas-container{flex:1;background:#000;position:relative;transition: all 0.3s ease}
+      .side-panel{width:280px;padding:15px;border-right:1px solid #333;display:flex;flex-direction:column;gap:12px;background:#1b1b1f;transition: width 0.3s ease, padding 0.3s ease;overflow:hidden}
+      .side-panel.collapsed{width:0;padding:0;border:none}
+      .ro-btn-play{background:#28a745;border:none;color:#fff;padding:12px;cursor:pointer;border-radius:4px;font-weight:bold;width:100%;margin-top:auto}
+      
+      /* Roblox Icon Button */
+      #ro-menu-icon{position:absolute;top:10px;left:10px;width:32px;height:32px;cursor:pointer;display:none;z-index:1001;filter: drop-shadow(0 0 5px rgba(0,0,0,0.5))}
+      
+      #esc-menu{position:absolute;inset:0;background:rgba(0,0,0,0.8);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(5px)}
+      .esc-box{width:320px;background:#25252b;padding:20px;border-radius:10px;border:1px solid #444;display:flex;flex-direction:column;gap:10px}
     `;
     document.head.appendChild(roStyle);
 
     var roWin = document.createElement('div');
     roWin.className = 'ro-win';
+    roWin.id = 'main-window';
     roWin.innerHTML = `
-      <div class="ro-bar"><span>Roblox Studio v0.8.8</span><button style="margin-left:auto;background:#ff4b4b;border:none;color:#fff;cursor:pointer;border-radius:4px;padding:2px 10px" onclick="location.reload()">X</button></div>
-      <div class="ro-tabs" id="nav-tabs">
-        <div class="ro-tab active" data-tab="p-av">Avatar</div>
-        <div class="ro-tab" data-tab="p-st">Studio</div>
-        <div class="ro-tab" data-tab="p-se">Settings</div>
+      <div class="ro-bar">
+        <span>Studio v0.9.0</span>
+        <div class="bar-btns">
+          <button class="bar-btn" id="btn-mute">🔊</button>
+          <button class="bar-btn" id="btn-min">−</button>
+          <button class="bar-btn" id="btn-res" style="display:none">❐</button>
+          <button class="bar-btn" style="background:#ff4b4b" onclick="location.reload()">X</button>
+        </div>
       </div>
       <div class="ro-body">
         <div class="side-panel" id="side-editor">
-          <div id="p-av" class="tab-content">
-            <label style="font-size:11px;color:#888">AVATAR PREVIEW</label>
-            <input type="text" id="u-in" class="ro-input" placeholder="Enter Username...">
-            <button id="u-btn" class="ro-btn-blue" style="margin-bottom:10px;width:100%">LOAD FACE</button>
-            <select id="part-select" class="ro-input">
-              <option value="head">Head</option><option value="torso">Torso</option>
-              <option value="larm">Left Arm</option><option value="rarm">Right Arm</option>
-              <option value="lleg">Left Leg</option><option value="rleg">Right Leg</option>
-            </select>
-            <input type="color" id="color-part" style="width:100%;height:40px;margin:10px 0" value="#cccccc">
-            <button id="btn-paint" class="ro-btn-blue" style="width:100%">APPLY COLOR</button>
+          <h4 style="margin:0">Explorer</h4>
+          <button id="btn-spawn" style="background:#0084ff;border:none;color:#fff;padding:8px;cursor:pointer;border-radius:4px">Insert Part</button>
+          <div style="margin-top:10px; font-size:11px; color:#888">
+            <b>Controls:</b><br>
+            Ctrl: Shift Lock<br>
+            Esc / Icon: Menu
           </div>
-          <div id="p-st" class="tab-content hidden">
-            <label style="font-size:11px;color:#888">BUILDING TOOLS</label>
-            <button id="btn-spawn" class="ro-btn-blue" style="width:100%;background:#6610f2">Spawn Part</button>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:10px">
-              <button class="ro-btn-blue">Move</button><button class="ro-btn-blue">Scale</button>
-              <button class="ro-btn-blue">Rotate</button><button class="ro-btn-blue">Delete</button>
-            </div>
-          </div>
-          <div id="p-se" class="tab-content hidden"><p style="color:#666">No settings available yet.</p></div>
-          <button id="btn-play" class="ro-btn-play" style="margin-top:auto">▶ PLAY TEST</button>
+          <button id="btn-play" class="ro-btn-play">▶ PLAY</button>
         </div>
         <div id="canvas-container">
-          <div id="lock-ui"></div>
+          <img id="ro-menu-icon" src="https://www.roblox.com/images/logos/rebrand/metric_2020/Roblox_Logo_White_64.png">
           <div id="esc-menu">
             <div class="esc-box">
-              <h2 style="margin:0;text-align:center">Paused</h2>
-              <button class="ro-btn-blue" id="esc-resume">Resume</button>
-              <button class="ro-btn-blue" id="esc-reset" style="background:#444">Reset Character</button>
-              <button class="ro-btn-blue" id="esc-leave" style="background:#ff4b4b">Stop Test</button>
+              <h3 style="margin:0;text-align:center">Menu</h3>
+              <button class="bar-btn" style="padding:12px; background:#3a3a42" id="esc-resume">Resume</button>
+              <button class="bar-btn" style="padding:12px; background:#444" id="esc-reset">Reset Character</button>
+              <button class="bar-btn" style="padding:12px; background:#ff4b4b" id="esc-leave">Leave Game</button>
             </div>
           </div>
         </div>
@@ -82,10 +74,9 @@
       rend.setSize(con.clientWidth, con.clientHeight);
       rend.setClearColor(0x75bbfd, 1);
       con.appendChild(rend.domElement);
-      scene.add(new T.AmbientLight(0xffffff, 1.3));
+      scene.add(new T.AmbientLight(0xffffff, 1.4));
 
-      // Player & State
-      var char = new T.Group(), parts = {}, isPlaying = false, isPaused = false, shiftLock = false;
+      var char = new T.Group(), parts = {}, isPlaying = false, isPaused = false, shiftLock = false, muted = false;
       var mk = (w,h,d,x,y) => {
         var m = new T.Mesh(new T.BoxGeometry(w,h,d), new T.MeshLambertMaterial({color:0xcccccc}));
         m.position.set(x,y,0); return m;
@@ -96,7 +87,6 @@
       Object.values(parts).forEach(p => char.add(p));
       scene.add(char);
 
-      // --- WHITE STUDDED BASEPLATE ---
       var loader = new T.TextureLoader();
       var studs = loader.load('https://raw.githubusercontent.com/ClreS/Roblox-Assets/master/Textures/Studs.png', (t)=>{
         t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(200, 200);
@@ -109,20 +99,13 @@
 
       window.onkeydown=(e)=>{
         if(e.code === "Escape" && isPlaying) toggleEsc();
-        if(e.code === "ControlLeft" && isPlaying && !isPaused) {
-          shiftLock = !shiftLock;
-          document.getElementById('lock-ui').style.display = shiftLock ? 'block' : 'none';
-        }
+        if(e.code === "ControlLeft" && isPlaying && !isPaused) shiftLock = !shiftLock;
         keys[e.code]=true;
       };
       window.onkeyup=(e)=>keys[e.code]=false;
 
       window.addEventListener('mousemove',(e)=>{ 
-        if(isPlaying && !isPaused) {
-          if(shiftLock || keys['MouseDown']) { // Shift-lock or holding mouse
-            char.rotation.y -= e.movementX * 0.003;
-          }
-        }
+        if(isPlaying && !isPaused && (shiftLock || keys['MouseDown'])) char.rotation.y -= e.movementX * 0.003;
       });
 
       var toggleEsc = () => {
@@ -134,7 +117,7 @@
       var loop = () => {
         requestAnimationFrame(loop);
         if (isPlaying && !isPaused) {
-          var speed = 0.2, moving = (keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']);
+          var speed = 0.2;
           if (keys['KeyW']) char.translateZ(-speed);
           if (keys['KeyS']) char.translateZ(speed);
           if (keys['KeyA']) char.translateX(-speed);
@@ -144,61 +127,63 @@
           char.position.y += velY;
           if (char.position.y > 0) { velY -= 0.012; } else { char.position.y = 0; velY = 0; isGrounded = true; }
 
-          var t = Date.now() * 0.01;
-          if (!isGrounded) { parts.larm.rotation.x = -1.2; parts.rarm.rotation.x = -1.2; }
-          else if (moving) {
-             parts.larm.rotation.x = Math.sin(t)*1.2; parts.rarm.rotation.x = -Math.sin(t)*1.2;
-             parts.lleg.rotation.x = -Math.sin(t)*1.2; parts.rleg.rotation.x = Math.sin(t)*1.2;
-          } else { Object.values(parts).forEach(p => p.rotation.x = 0); }
+          if (keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD']) {
+             parts.larm.rotation.x = Math.sin(Date.now() * 0.01)*1.2;
+             parts.rarm.rotation.x = -Math.sin(Date.now() * 0.01)*1.2;
+          }
           
-          var offset = new T.Vector3(shiftLock ? 2 : 0, 7, 18).applyQuaternion(char.quaternion);
+          var offset = new T.Vector3(shiftLock ? 2 : 0, 7, 20).applyQuaternion(char.quaternion);
           cam.position.copy(char.position).add(offset);
           cam.lookAt(char.position.clone().add(new T.Vector3(0,2,0)));
         } else if (!isPlaying) {
-          char.rotation.y += 0.01;
-          cam.position.set(0, 4, 12);
+          cam.position.set(0, 4, 15);
           cam.lookAt(char.position);
         }
         rend.render(scene, cam);
       };
       loop();
 
-      // UI Actions
-      document.querySelectorAll('.ro-tab').forEach(btn => {
-        btn.onclick = () => {
-          document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-          document.querySelectorAll('.ro-tab').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          document.getElementById(btn.dataset.tab).classList.remove('hidden');
-        }
-      });
-
+      // BUTTON LOGIC
       document.getElementById('btn-play').onclick = () => {
         isPlaying = true;
-        document.getElementById('side-editor').classList.add('hidden');
-        document.getElementById('nav-tabs').classList.add('hidden');
+        document.getElementById('side-editor').classList.add('collapsed');
+        document.getElementById('ro-menu-icon').style.display = 'block';
+        setTimeout(() => rend.setSize(con.clientWidth, con.clientHeight), 350);
         con.requestPointerLock();
       };
 
-      document.getElementById('btn-spawn').onclick = () => {
-        var p = new T.Mesh(new T.BoxGeometry(4,4,4), new T.MeshLambertMaterial({color: Math.random()*0xffffff}));
-        p.position.set(Math.random()*10, 0, Math.random()*10);
-        scene.add(p);
-      };
-
+      document.getElementById('ro-menu-icon').onclick = toggleEsc;
       document.getElementById('esc-resume').onclick = toggleEsc;
+      document.getElementById('esc-reset').onclick = () => { char.position.set(0,0,0); toggleEsc(); };
       document.getElementById('esc-leave').onclick = () => {
-        isPlaying = false; isPaused = false; shiftLock = false;
-        document.getElementById('lock-ui').style.display = 'none';
+        isPlaying = false; isPaused = false;
         document.getElementById('esc-menu').style.display = 'none';
-        document.getElementById('side-editor').classList.remove('hidden');
-        document.getElementById('nav-tabs').classList.remove('hidden');
+        document.getElementById('ro-menu-icon').style.display = 'none';
+        document.getElementById('side-editor').classList.remove('collapsed');
+        setTimeout(() => rend.setSize(con.clientWidth, con.clientHeight), 350);
         document.exitPointerLock();
       };
-      document.getElementById('esc-reset').onclick = () => { char.position.set(0,0,0); toggleEsc(); };
 
-      document.getElementById('btn-paint').onclick = () => { 
-        parts[document.getElementById('part-select').value].material.color.set(document.getElementById('color-part').value); 
+      document.getElementById('btn-mute').onclick = () => {
+        muted = !muted;
+        document.getElementById('btn-mute').innerText = muted ? "🔇" : "🔊";
+      };
+
+      document.getElementById('btn-min').onclick = () => {
+        document.getElementById('main-window').classList.add('minimized');
+        document.getElementById('btn-min').style.display = 'none';
+        document.getElementById('btn-res').style.display = 'inline';
+      };
+
+      document.getElementById('btn-res').onclick = () => {
+        document.getElementById('main-window').classList.remove('minimized');
+        document.getElementById('btn-min').style.display = 'inline';
+        document.getElementById('btn-res').style.display = 'none';
+      };
+
+      document.getElementById('btn-spawn').onclick = () => {
+        var p = new T.Mesh(new T.BoxGeometry(4,4,4), new T.MeshLambertMaterial({color: 0x888888}));
+        p.position.set(Math.random()*10, 0, Math.random()*10); scene.add(p);
       };
     };
 
